@@ -1,0 +1,8 @@
+.DS_Store
+node_modules
+npm-debug.log
+/build/
+.merlin
+.bsb.lock
+/lib/bs/
+/**/*.bs.js
