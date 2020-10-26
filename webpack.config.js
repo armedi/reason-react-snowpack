@@ -1,3 +1,7 @@
+require('@babel/register')({
+  presets: ['@babel/preset-env'],
+});
+
 const path = require('path');
 const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
@@ -8,6 +12,9 @@ const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
 const dotenv = require('dotenv').config({
   path: path.join(__dirname, '.env'),
 });
+
+const ReactDOMServer = require('react-dom/server');
+const { make: App } = require('./src/App.bs');
 
 // this webpack configuration is only used for production
 
@@ -48,6 +55,9 @@ module.exports = {
     new HtmlWebpackPlugin({
       inject: true,
       template: 'public/indexProduction.html',
+      templateParameters: {
+        REACT_ROOT: ReactDOMServer.renderToString(App()),
+      },
     }),
     new CopyPlugin({
       patterns: [

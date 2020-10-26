@@ -1,4 +1,4 @@
 [@react.component]
 let make = () => {
-  <div> {React.string("Reason React")} </div>
-}
+  <div> {React.string("Reason React")} </div>;
+};
