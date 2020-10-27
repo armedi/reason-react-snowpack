@@ -1,7 +1,5 @@
-require('@babel/register')({
-  presets: ['@babel/preset-env'],
-});
-
+const { execSync } = require('child_process');
+const fs = require('fs');
 const path = require('path');
 const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
@@ -13,17 +11,18 @@ const dotenv = require('dotenv').config({
   path: path.join(__dirname, '.env'),
 });
 
-const ReactDOMServer = require('react-dom/server');
-const { make: App } = require('./src/App.bs');
-
 // this webpack configuration is only used for production
+
+const ssgConfig = fs.existsSync('./ssg.config.js')
+  ? require('./ssg.config.js')
+  : { routes: ['/'] };
 
 module.exports = {
   mode: 'production',
   bail: true,
   output: {
-    filename: 'static/js/[name].[contenthash:8].js',
-    chunkFilename: 'static/js/[name].[contenthash:8].chunk.js',
+    filename: 'assets/js/[name].[contenthash:8].js',
+    chunkFilename: 'assets/js/[name].[contenthash:8].chunk.js',
     publicPath: '/',
     globalObject: 'this',
   },
@@ -52,13 +51,18 @@ module.exports = {
         MODE: 'production',
       }),
     }),
-    new HtmlWebpackPlugin({
-      inject: true,
-      template: 'public/indexProduction.html',
-      templateParameters: {
-        REACT_ROOT: ReactDOMServer.renderToString(App()),
-      },
-    }),
+    ...ssgConfig.routes.map(
+      (route) =>
+        new HtmlWebpackPlugin({
+          inject: true,
+          filename: path.join(route.replace(/^\//, ''), 'index.html'),
+          template: 'public/indexProduction.html',
+          templateParameters: {
+            REACT_ROOT: execSync(`node scripts/renderToString ${route}`),
+          },
+        })
+    ),
+
     new CopyPlugin({
       patterns: [
         {
@@ -73,8 +77,8 @@ module.exports = {
       },
     }),
     new MiniCssExtractPlugin({
-      filename: 'static/css/[name].[contenthash:8].css',
-      chunkFilename: 'static/css/[name].[contenthash:8].chunk.css',
+      filename: 'assets/css/[name].[contenthash:8].css',
+      chunkFilename: 'assets/css/[name].[contenthash:8].chunk.css',
     }),
   ],
 };
